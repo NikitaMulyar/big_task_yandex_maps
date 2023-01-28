@@ -1,11 +1,11 @@
 import os
 import pygame
 import requests
-from change_z import change_z
+from up_down_map import up_down_map
 
 
-def request(coord, size):
-    map_request = f"http://static-maps.yandex.ru/1.x/?ll={coord[1]},{coord[0]}&l=map&z={size}"
+def request(coord, spn):
+    map_request = f"http://static-maps.yandex.ru/1.x/?ll={coord[0]},{coord[1]}&l=map&spn={spn},{spn}"
     response = requests.get(map_request)
 
     if not response:
@@ -26,10 +26,12 @@ def main(coord, size):
     screen.blit(pygame.image.load("map.png"), (0, 0))
     pygame.display.flip()
     run = True
+    data = [size, coord[0], coord[1]]
     while run:
         for event in pygame.event.get():
-            size = change_z(event, size)
-        request(coord, size)
+            data = list(up_down_map(event, *data))
+            print(data)
+        request(data[1:], data[0])
         screen.blit(pygame.image.load("map.png"), (0, 0))
         pygame.display.flip()
     pygame.quit()
@@ -37,6 +39,6 @@ def main(coord, size):
 
 
 if __name__ == '__main__':
-    coord = input('Введите координаты через пробел: ').split()
-    size = input('Введите масштаб карты: ')
-    main(coord, size)
+    coord = input('Введите координаты через пробел (широта, долгота): ').split()[::-1]
+    spn = input('Введите масштаб карты (от 0 до 17): ')
+    main(coord, spn)
