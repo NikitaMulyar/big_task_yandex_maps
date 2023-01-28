@@ -43,7 +43,7 @@ def get_coors(name):
 
 
 def request(size, coord):
-    map_request = f"http://static-maps.yandex.ru/1.x/?ll={coord[0]},{coord[1]}&l=map&z={size}"
+    map_request = f"http://static-maps.yandex.ru/1.x/?ll={coord[0]},{coord[1]}&l=map&z={size}&pt={coord[0]},{coord[1]},pm2dgm"
     response = requests.get(map_request)
 
     if not response:
