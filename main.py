@@ -1,5 +1,4 @@
 import os
-import sys
 import pygame
 import requests
 from change_z import change_z
@@ -13,7 +12,7 @@ def request(coord, size):
         print("Ошибка выполнения запроса:")
         print(map_request)
         print("Http статус:", response.status_code, "(", response.reason, ")")
-        sys.exit(1)
+        return
 
     map_file = "map.png"
     with open(map_file, "wb") as file:
@@ -34,7 +33,7 @@ def main(coord, size):
         screen.blit(pygame.image.load("map.png"), (0, 0))
         pygame.display.flip()
     pygame.quit()
-    os.remove(map_file)
+    os.remove("map.png")
 
 
 if __name__ == '__main__':
