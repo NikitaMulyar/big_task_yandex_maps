@@ -4,8 +4,8 @@ import requests
 from change_z import change_z
 
 
-def request(coord, size):
-    map_request = f"http://static-maps.yandex.ru/1.x/?ll={coord[1]},{coord[0]}&l=map&z={size}"
+def request(size, coord1, coord2):
+    map_request = f"http://static-maps.yandex.ru/1.x/?ll={coord1},{coord2}&l=map&z={size}"
     response = requests.get(map_request)
 
     if not response:
@@ -20,16 +20,20 @@ def request(coord, size):
 
 
 def main(coord, size):
-    request(coord, size)
+    request(size, *coord)
     pygame.init()
     screen = pygame.display.set_mode((600, 450))
     screen.blit(pygame.image.load("map.png"), (0, 0))
     pygame.display.flip()
     run = True
+    data = [size, coord[0], coord[1]]
     while run:
         for event in pygame.event.get():
-            size = change_z(event, size)
-        request(coord, size)
+            if event.type == pygame.QUIT:
+                run = False
+                break
+            data = list(change_z(event, *data))
+        request(*data)
         screen.blit(pygame.image.load("map.png"), (0, 0))
         pygame.display.flip()
     pygame.quit()
@@ -37,6 +41,6 @@ def main(coord, size):
 
 
 if __name__ == '__main__':
-    coord = input('Введите координаты через пробел: ').split()
+    coord = input('Введите координаты через пробел (долгота, широта): ').split()
     size = input('Введите масштаб карты: ')
     main(coord, size)
