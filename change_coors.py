@@ -44,7 +44,7 @@ def get_org_name(x, y, name):
     point = organization["geometry"]["coordinates"]
     org_point = "{0},{1}".format(point[0], point[1])
     # print(lonlat_distance((x, y), (float(point[0]), float(point[1]))))
-    if lonlat_distance((x, y), (float(point[0]), float(point[1]))) <= 500:
+    if lonlat_distance((x, y), (float(point[0]), float(point[1]))) <= 50:
         return org_name, org_point
     return None, None
 
