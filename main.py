@@ -5,6 +5,7 @@ from change_z import change_z
 from consts import *
 
 
+
 class TextInputBox(pygame.sprite.Sprite):
     def __init__(self, x, y, clr, bg, w, h, text=''):
         super().__init__()
@@ -66,8 +67,12 @@ def get_coors(name):
     return [toponym_longitude, toponym_lattitude]
 
 
+metka = get_coors('Москва')
+
+
 def request(size, coord, map_type):
-    map_request = f"http://static-maps.yandex.ru/1.x/?ll={coord[0]},{coord[1]}&l={map_type}&z={size}&pt={coord[0]},{coord[1]},pm2dgm"
+    global metka
+    map_request = f"http://static-maps.yandex.ru/1.x/?ll={coord[0]},{coord[1]}&l={map_type}&z={size}&pt={metka[0]},{metka[1]},pm2dgm"
     response = requests.get(map_request)
 
     if not response:
@@ -96,6 +101,7 @@ def main():
     check_box = TextInputBox(400, 400, (255, 255, 255), (200, 200, 100), 150, 40, text='Искать!')
     while run:
         for event in pygame.event.get():
+            global metka
             if event.type == pygame.QUIT:
                 run = False
                 break
@@ -119,10 +125,12 @@ def main():
                     map_type_box.change_type()
                     txt = 'Москва' if not text_box.text else text_box.text
                     data = [data[0], *get_coors(txt)]
+                    metka = get_coors(txt)
                     request(data[0], data[1:], map_type_box.curr_type())
                 if check_box.rect_.collidepoint(*pygame.mouse.get_pos()):
                     if text_box.text != '':
                         data = [data[0], *get_coors(text_box.text)]
+                        metka = get_coors(text_box.text)
                         request(data[0], data[1:], map_type_box.curr_type())
         screen.blit(pygame.image.load("map.png"), (0, 0))
         text_box.render(screen)
@@ -130,7 +138,7 @@ def main():
         map_type_box.render(screen)
         pygame.display.flip()
     pygame.quit()
-    os.remove("map.png")
+    os.remove('map.png')
 
 
 if __name__ == '__main__':

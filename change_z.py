@@ -23,4 +23,6 @@ def change_z(event, z, x, y):
             y -= 450 / CONST_Y
         elif event.key == pygame.K_LEFT:
             x -= 600 / CONST_X
+    global metka
+    metka = [x, y]
     return z, x, y
