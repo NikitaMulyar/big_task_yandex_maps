@@ -2,6 +2,7 @@ import os
 import pygame
 import requests
 from change_z import change_z
+from change_coors import *
 from consts import *
 
 
@@ -53,33 +54,37 @@ def get_coors(name):
     response = requests.get(geocoder_api_server, params=geocoder_params)
 
     if not response:
-        print("Ошибка выполнения запроса:")
-        print(geocoder_api_server)
-        print("Http статус:", response.status_code, "(", response.reason, ")")
-        return [0, 0], ''
+        return [None, None], '', ''
 
-    json_response = response.json()
-    toponym = json_response["response"]["GeoObjectCollection"][
-        "featureMember"][0]["GeoObject"]
-    adrs = toponym['metaDataProperty']['GeocoderMetaData']['AddressDetails']['Country']['AddressLine']
     try:
-        index = toponym['metaDataProperty']['GeocoderMetaData']['Address']['postal_code']
-        print('rrrrrr')
+        json_response = response.json()
+        toponym = json_response["response"]["GeoObjectCollection"][
+            "featureMember"][0]["GeoObject"]
+        adrs = toponym['metaDataProperty']['GeocoderMetaData']['AddressDetails']['Country'][
+            'AddressLine']
+        index = toponym['metaDataProperty']['GeocoderMetaData']['Address'].get('postal_code', '')
+        toponym_coodrinates = toponym["Point"]["pos"]
+        toponym_longitude, toponym_lattitude = toponym_coodrinates.split(" ")
     except Exception:
         index = ''
-    toponym_coodrinates = toponym["Point"]["pos"]
-    toponym_longitude, toponym_lattitude = toponym_coodrinates.split(" ")
+        adrs = ''
+        toponym_longitude, toponym_lattitude = [None, None]
     return [toponym_longitude, toponym_lattitude], adrs, index
 
 
-def request(size, coord):
-    map_request = f"http://static-maps.yandex.ru/1.x/?ll={coord[0]},{coord[1]}&l=map&z={size}&pt={coord[0]},{coord[1]},pm2dgm"
+def request(size, coord, pt=None, pt2=None):
+    pts = []
+    if pt is not None:
+        pts.append(f"{pt[0]},{pt[1]},pm2dbm")
+    if pt2 is not None:
+        pts.append(f"{pt2},pm2rdm")
+    if pt is None and pt2 is None:
+        pts.append(f"{coord[0]},{coord[1]},pm2dgm")
+    pts = "pt=" + "~".join(pts)
+    map_request = f"http://static-maps.yandex.ru/1.x/?ll={coord[0]},{coord[1]}&l=map&z={size}&{pts}"
     response = requests.get(map_request)
 
     if not response:
-        print("Ошибка выполнения запроса:")
-        print(map_request)
-        print("Http статус:", response.status_code, "(", response.reason, ")")
         return
 
     map_file = "map.png"
@@ -101,6 +106,8 @@ def main():
     check_box = TextInputBox(400, 400, (255, 255, 255), (200, 200, 100), 150, 40, 40, text='Искать!')
     address_box = TextInputBox(10, 10, (255, 255, 255), (0, 50, 100), 540, 20, 20)
     index_box = IndexBox(560, 10)
+    data2 = [None]  # z, x, y, (obj_x, obj_y)
+    data3 = [None]  # org_name, org_point
     while run:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -120,25 +127,50 @@ def main():
                     else:
                         text_box.text += event.unicode
                 data = list(change_z(event, *data))
-                request(data[0], data[1:])
+                request(data[0], data[1:], pt=data2[-1], pt2=data3[-1])
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                if index_box.rect_.collidepoint(*pygame.mouse.get_pos()):
+                pos = pygame.mouse.get_pos()
+                if index_box.rect_.collidepoint(*pos):
+                    index_box.change_clr()
                     if text_box.text != '':
-                        index_box.change_clr()
-                        res = get_coors(text_box.text)
+                        if data2[0] is None:
+                            res = get_coors(text_box.text)
+                        else:
+                            res = get_coors(get_toponym(data2[-1]))
+                        if res[0][0] is None:
+                            continue
                         if index_box.on_off():
                             address_box.text = res[2] + ' ' + res[1]
                         else:
                             address_box.text = res[1]
-                if check_box.rect_.collidepoint(*pygame.mouse.get_pos()):
+                elif check_box.rect_.collidepoint(*pos):
                     if text_box.text != '':
                         res = get_coors(text_box.text)
+                        if res[0][0] is None:
+                            continue
+                        data2 = [None]
+                        data3 = [None]
                         data = [data[0], *res[0]]
-                        request(data[0], data[1:])
+                        request(data[0], data[1:], pt=data2[-1], pt2=data3[-1])
                         if index_box.on_off():
                             address_box.text = res[2] + ' ' + res[1]
                         else:
                             address_box.text = res[1]
+                elif event.button == 1:
+                    data2 = list(find_object(*data, pos))
+                    data3 = [None]
+                    request(data2[0], data2[1:3], pt=data2[-1], pt2=data3[-1])
+                    tmp = get_toponym(data2[3])
+                    if index_box.on_off():
+                        address_box.text = tmp[1] + ' ' + tmp[0]
+                    else:
+                        address_box.text = tmp[0]
+                elif event.button == 3:
+                    data3 = list(find_org(*data, pos))
+                    data2 = [None]
+                    if data3[0] != '':
+                        request(data[0], data[1:3], pt=data2[-1], pt2=data3[-1])
+                        address_box.text = data3[0]
         screen.blit(pygame.image.load("map.png"), (0, 0))
         text_box.render(screen)
         check_box.render(screen)
