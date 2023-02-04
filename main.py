@@ -5,7 +5,6 @@ from change_z import change_z
 from consts import *
 
 
-
 class TextInputBox(pygame.sprite.Sprite):
     def __init__(self, x, y, clr, bg, w, h, text=''):
         super().__init__()
@@ -31,7 +30,7 @@ class MapType(pygame.sprite.Sprite):
         self.text = 'Тип карты'
         self.types = ['map', 'sat', 'sat,skl']
         self.ind = 0
-        self.rect_ = pygame.rect.Rect(x, y, 100, 30)
+        self.rect_ = pygame.rect.Rect(x, y, 100, 20)
 
     def change_type(self):
         self.ind = (self.ind + 1) % 3
@@ -97,8 +96,9 @@ def main():
     pygame.display.flip()
     run = True
     data = [size, coord[0], coord[1]]
-    text_box = TextInputBox(10, 400, (255, 255, 255), (200, 50, 100), 350, 40)
-    check_box = TextInputBox(400, 400, (255, 255, 255), (200, 200, 100), 150, 40, text='Искать!')
+    text_box = TextInputBox(10, 400, (255, 255, 255), (200, 50, 100), 330, 25)
+    check_box = TextInputBox(350, 370, (255, 255, 255), (200, 200, 100), 100, 25, text='Искать!')
+    check_box2 = TextInputBox(350, 400, (255, 255, 255), (200, 200, 100), 270, 25, text='Сбросить данные')
     while run:
         for event in pygame.event.get():
             global metka
@@ -132,9 +132,13 @@ def main():
                         data = [data[0], *get_coors(text_box.text)]
                         metka = get_coors(text_box.text)
                         request(data[0], data[1:], map_type_box.curr_type())
+                if check_box2.rect_.collidepoint(*pygame.mouse.get_pos()):
+                    metka = get_coors('Москва')
+                    request(data[0], data[1:], map_type_box.curr_type())
         screen.blit(pygame.image.load("map.png"), (0, 0))
         text_box.render(screen)
         check_box.render(screen)
+        check_box2.render(screen)
         map_type_box.render(screen)
         pygame.display.flip()
     pygame.quit()
