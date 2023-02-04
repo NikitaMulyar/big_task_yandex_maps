@@ -123,12 +123,13 @@ def main():
                 request(data[0], data[1:])
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if index_box.rect_.collidepoint(*pygame.mouse.get_pos()):
-                    index_box.change_clr()
-                    res = get_coors(text_box.text)
-                    if index_box.on_off():
-                        address_box.text = res[2] + ' ' + res[1]
-                    else:
-                        address_box.text = res[1]
+                    if text_box.text != '':
+                        index_box.change_clr()
+                        res = get_coors(text_box.text)
+                        if index_box.on_off():
+                            address_box.text = res[2] + ' ' + res[1]
+                        else:
+                            address_box.text = res[1]
                 if check_box.rect_.collidepoint(*pygame.mouse.get_pos()):
                     if text_box.text != '':
                         res = get_coors(text_box.text)
