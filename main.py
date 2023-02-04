@@ -124,7 +124,6 @@ def main():
                 if map_type_box.rect_.collidepoint(*pygame.mouse.get_pos()):
                     map_type_box.change_type()
                     txt = 'Москва' if not text_box.text else text_box.text
-                    data = [data[0], *get_coors(txt)]
                     metka = get_coors(txt)
                     request(data[0], data[1:], map_type_box.curr_type())
                 if check_box.rect_.collidepoint(*pygame.mouse.get_pos()):
@@ -134,7 +133,8 @@ def main():
                         request(data[0], data[1:], map_type_box.curr_type())
                 if check_box2.rect_.collidepoint(*pygame.mouse.get_pos()):
                     metka = get_coors('Москва')
-                    request(data[0], data[1:], map_type_box.curr_type())
+                    text_box.text = ''
+                    request(data[0], metka, map_type_box.curr_type())
         screen.blit(pygame.image.load("map.png"), (0, 0))
         text_box.render(screen)
         check_box.render(screen)
