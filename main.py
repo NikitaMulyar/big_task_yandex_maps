@@ -161,16 +161,13 @@ def main():
                 request(data[0], data[1:], map_type_box.curr_type(), pt=data2[-1], pt2=data3[-1])
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
-                if map_type_box.rect_.collidepoint(*pos):
-                    map_type_box.change_type()
-                    request(data[0], data[1:], map_type_box.curr_type(), pt=data2[-1], pt2=data3[-1])
-                elif index_box.rect_.collidepoint(*pos):
+                if index_box.rect_.collidepoint(*pos):
                     index_box.change_clr()
-                    if text_box.text != '':
-                        if data2[0] is None:
-                            res = get_coors(text_box.text)
+                    if text_box.text != '' or address_box.text != '':
+                        if text_box.text == '':
+                            res = get_coors(address_box.text)
                         else:
-                            res = get_coors(get_toponym(data2[-1]))
+                            res = get_coors(text_box.text)
                         if res[0][0] is None:
                             continue
                         metka = res[0]
@@ -200,6 +197,9 @@ def main():
                     address_box.text = ''
                     data2 = [None]
                     data3 = [None]
+                    request(data[0], data[1:], map_type_box.curr_type(), pt=data2[-1], pt2=data3[-1])
+                elif map_type_box.rect_.collidepoint(*pos):
+                    map_type_box.change_type()
                     request(data[0], data[1:], map_type_box.curr_type(), pt=data2[-1], pt2=data3[-1])
                 elif event.button == 1:
                     data2 = list(find_object(*data, pos))
