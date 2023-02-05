@@ -6,8 +6,8 @@ def change_z(event, z, x, y):
     z = int(z)
     x = float(x)
     y = float(y)
-    CONST_X = 4.56555 * 2 ** (z - 2.63)
-    CONST_Y = 8 * 2 ** (z - 2.46)
+    CONST_X = 4.56555 * 2 ** (z - 2.678)
+    CONST_Y = 8 * 2 ** (z - 2.6675)
     if event.type == pygame.KEYDOWN:
         if event.key == pygame.K_PAGEUP:
             if z < 16:

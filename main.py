@@ -21,6 +21,29 @@ class TextInputBox(pygame.sprite.Sprite):
         pygame.draw.rect(screen, self.color, self.rect_.inflate(5, 5), 2)
 
 
+class MapType(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.color = (255, 255, 255)
+        self.bg = (100, 100, 100)
+        self.pos = (x, y)
+        self.font = pygame.font.Font(None, 30)
+        self.text = 'Тип карты'
+        self.types = ['map', 'sat', 'sat,skl']
+        self.ind = 0
+        self.rect_ = pygame.rect.Rect(x, y, 100, 20)
+
+    def change_type(self):
+        self.ind = (self.ind + 1) % 3
+
+    def curr_type(self):
+        return self.types[self.ind]
+
+    def render(self, screen):
+        pygame.draw.rect(screen, self.bg, self.rect_)
+        screen.blit(self.font.render(self.text, True, self.color), self.pos)
+
+
 class IndexBox(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
@@ -72,16 +95,17 @@ def get_coors(name):
     return [toponym_longitude, toponym_lattitude], adrs, index
 
 
-def request(size, coord, pt=None, pt2=None):
+def request(size, coord, map_type, pt=None, pt2=None):
+    global metka
     pts = []
     if pt is not None:
         pts.append(f"{pt[0]},{pt[1]},pm2dbm")
     if pt2 is not None:
         pts.append(f"{pt2},pm2rdm")
     if pt is None and pt2 is None:
-        pts.append(f"{coord[0]},{coord[1]},pm2dgm")
+        pts.append(f"{metka[0]},{metka[1]},pm2dgm")
     pts = "pt=" + "~".join(pts)
-    map_request = f"http://static-maps.yandex.ru/1.x/?ll={coord[0]},{coord[1]}&l=map&z={size}&{pts}"
+    map_request = f"http://static-maps.yandex.ru/1.x/?ll={coord[0]},{coord[1]}&l={map_type}&z={size}&{pts}"
     response = requests.get(map_request)
 
     if not response:
@@ -92,18 +116,25 @@ def request(size, coord, pt=None, pt2=None):
         file.write(response.content)
 
 
+metka = get_coors('Москва')[0]
+
+
 def main():
+    global metka
+    pygame.init()
     size = 10
     coord = get_coors('Москва')[0]
-    request(size, coord)
-    pygame.init()
+    map_type_box = MapType(10, 50)
+    request(size, coord, map_type_box.curr_type())
     screen = pygame.display.set_mode((600, 450))
     screen.blit(pygame.image.load("map.png"), (0, 0))
     pygame.display.flip()
     run = True
     data = [size, coord[0], coord[1]]
     text_box = TextInputBox(10, 400, (255, 255, 255), (200, 50, 100), 350, 40, 40)
-    check_box = TextInputBox(400, 400, (255, 255, 255), (200, 200, 100), 150, 40, 40, text='Искать!')
+    check_box = TextInputBox(400, 370, (255, 255, 255), (200, 200, 100), 73, 18, 30, text='Искать!')
+    check_box2 = TextInputBox(400, 400, (255, 255, 255), (200, 200, 100), 180, 18, 30,
+                              text='Сбросить данные')
     address_box = TextInputBox(10, 10, (255, 255, 255), (0, 50, 100), 540, 20, 20)
     index_box = IndexBox(560, 10)
     data2 = [None]  # z, x, y, (obj_x, obj_y)
@@ -127,10 +158,13 @@ def main():
                     else:
                         text_box.text += event.unicode
                 data = list(change_z(event, *data))
-                request(data[0], data[1:], pt=data2[-1], pt2=data3[-1])
+                request(data[0], data[1:], map_type_box.curr_type(), pt=data2[-1], pt2=data3[-1])
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
-                if index_box.rect_.collidepoint(*pos):
+                if map_type_box.rect_.collidepoint(*pos):
+                    map_type_box.change_type()
+                    request(data[0], data[1:], map_type_box.curr_type(), pt=data2[-1], pt2=data3[-1])
+                elif index_box.rect_.collidepoint(*pos):
                     index_box.change_clr()
                     if text_box.text != '':
                         if data2[0] is None:
@@ -139,6 +173,7 @@ def main():
                             res = get_coors(get_toponym(data2[-1]))
                         if res[0][0] is None:
                             continue
+                        metka = res[0]
                         if index_box.on_off():
                             address_box.text = res[2] + ' ' + res[1]
                         else:
@@ -150,16 +185,26 @@ def main():
                             continue
                         data2 = [None]
                         data3 = [None]
-                        data = [data[0], *res[0]]
-                        request(data[0], data[1:], pt=data2[-1], pt2=data3[-1])
                         if index_box.on_off():
                             address_box.text = res[2] + ' ' + res[1]
                         else:
                             address_box.text = res[1]
+                        metka = get_coors(address_box.text)[0]
+                        data = [data[0], *metka]
+                        request(data[0], data[1:], map_type_box.curr_type(), pt=data2[-1],
+                                pt2=data3[-1])
+                elif check_box2.rect_.collidepoint(*pos):
+                    metka = get_coors('Москва')[0]
+                    data = [data[0], *metka]
+                    text_box.text = ''
+                    address_box.text = ''
+                    data2 = [None]
+                    data3 = [None]
+                    request(data[0], data[1:], map_type_box.curr_type(), pt=data2[-1], pt2=data3[-1])
                 elif event.button == 1:
                     data2 = list(find_object(*data, pos))
                     data3 = [None]
-                    request(data2[0], data2[1:3], pt=data2[-1], pt2=data3[-1])
+                    request(data[0], data[1:], map_type_box.curr_type(), pt=data2[-1], pt2=data3[-1])
                     tmp = get_toponym(data2[3])
                     if index_box.on_off():
                         address_box.text = tmp[1] + ' ' + tmp[0]
@@ -168,14 +213,16 @@ def main():
                 elif event.button == 3:
                     data3 = list(find_org(*data, pos))
                     data2 = [None]
-                    if data3[0] != '':
-                        request(data[0], data[1:3], pt=data2[-1], pt2=data3[-1])
+                    if data3[0] is not None:
+                        request(data[0], data[1:], map_type_box.curr_type(), pt=data2[-1], pt2=data3[-1])
                         address_box.text = data3[0]
         screen.blit(pygame.image.load("map.png"), (0, 0))
         text_box.render(screen)
         check_box.render(screen)
         address_box.render(screen)
         index_box.render(screen)
+        check_box2.render(screen)
+        map_type_box.render(screen)
         pygame.display.flip()
     pygame.quit()
     os.remove("map.png")
