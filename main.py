@@ -97,17 +97,14 @@ def get_coors(name):
 
 def request(size, coord, map_type, pt=None, pt2=None, none_pts=False):
     global metka
-    if not none_pts:
-        pts = []
-        if pt is not None:
-            pts.append(f"{pt[0]},{pt[1]},pm2dbm")
-        if pt2 is not None:
-            pts.append(f"{pt2},pm2rdm")
-        if pt is None and pt2 is None:
-            pts.append(f"{metka[0]},{metka[1]},pm2dgm")
-        pts = "pt=" + "~".join(pts)
-    else:
-        pts = ''
+    pts = []
+    if pt is not None:
+        pts.append(f"{pt[0]},{pt[1]},pm2dbm")
+    if pt2 is not None:
+        pts.append(f"{pt2},pm2rdm")
+    if pt is None and pt2 is None and not none_pts:
+        pts.append(f"{metka[0]},{metka[1]},pm2dgm")
+    pts = "pt=" + "~".join(pts)
     map_request = f"http://static-maps.yandex.ru/1.x/?ll={coord[0]},{coord[1]}&l={map_type}&z={size}&{pts}"
     response = requests.get(map_request)
 
@@ -217,10 +214,10 @@ def main():
                     else:
                         address_box.text = tmp[0]
                 elif event.button == 3:
-                    reset = False
                     data3 = list(find_org(*data, pos))
-                    data2 = [None]
                     if data3[0] is not None:
+                        reset = False
+                        data2 = [None]
                         request(data[0], data[1:], map_type_box.curr_type(), pt=data2[-1], pt2=data3[-1], none_pts=reset)
                         address_box.text = data3[0]
         screen.blit(pygame.image.load("map.png"), (0, 0))

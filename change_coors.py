@@ -28,24 +28,24 @@ def get_org_name(x, y, name):
         "apikey": api_key,
         "text": name,
         "lang": "ru_RU",
-        "ll": address_ll,
         "type": "biz"
     }
     response = requests.get(search_api_server, params=search_params)
     if not response:
+        print(1)
         return None, None
 
     json_response = response.json()
-    try:
-        for organization in json_response["features"]:
-            org_name = organization["properties"]["CompanyMetaData"]["name"]
+    for organization in json_response["features"]:
+        try:
+            org_name = organization["properties"]["name"]
             point = organization["geometry"]["coordinates"]
             org_point = "{0},{1}".format(point[0], point[1])
             # print(lonlat_distance((x, y), (float(point[0]), float(point[1]))))
             if lonlat_distance((x, y), (float(point[0]), float(point[1]))) <= 50:
                 return org_name, org_point
-    except Exception:
-        return None, None
+        except Exception:
+            continue
     return None, None
 
 
