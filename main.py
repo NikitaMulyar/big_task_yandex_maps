@@ -214,8 +214,9 @@ def main():
                     else:
                         address_box.text = tmp[0]
                 elif event.button == 3:
-                    data3 = list(find_org(*data, pos))
-                    if data3[0] is not None:
+                    tmp = list(find_org(*data, pos))
+                    if tmp[0] is not None:
+                        data3 = list(find_org(*data, pos))
                         reset = False
                         data2 = [None]
                         request(data[0], data[1:], map_type_box.curr_type(), pt=data2[-1], pt2=data3[-1], none_pts=reset)
